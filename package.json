@@ -20,10 +20,10 @@
   "author": "dhaalves",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dhaalves/oswap.git"
+    "url": "git+https://github.com/dhaalves/opencode-swap.git"
   },
-  "bugs": "https://github.com/dhaalves/oswap/issues",
-  "homepage": "https://github.com/dhaalves/oswap#readme",
+  "bugs": "https://github.com/dhaalves/opencode-swap/issues",
+  "homepage": "https://github.com/dhaalves/opencode-swap#readme",
   "type": "module",
   "files": [
     "src"

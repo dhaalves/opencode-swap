@@ -53,8 +53,8 @@ npm install -g opencode-swap   # puts the `oswap` command on your PATH
 Or from source (for development):
 
 ```sh
-git clone https://github.com/dhaalves/oswap.git
-cd oswap
+git clone https://github.com/dhaalves/opencode-swap.git
+cd opencode-swap
 npm link
 ```
 
