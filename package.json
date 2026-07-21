@@ -1,5 +1,5 @@
 {
-  "name": "oswap",
+  "name": "opencode-swap",
   "version": "0.1.0",
   "description": "Automatic API key rotation for opencode-go — local proxy that round-robins multiple accounts and fails over on rate limits (HTTP 429)",
   "keywords": [
@@ -25,6 +25,9 @@
   "bugs": "https://github.com/dhaalves/oswap/issues",
   "homepage": "https://github.com/dhaalves/oswap#readme",
   "type": "module",
+  "files": [
+    "src"
+  ],
   "bin": {
     "oswap": "./src/cli.js"
   },

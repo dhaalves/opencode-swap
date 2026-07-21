@@ -47,9 +47,15 @@ The `baseURL` override is set on the **provider**, so every `opencode-go/*` mode
 ## Install
 
 ```sh
+npm install -g opencode-swap   # puts the `oswap` command on your PATH
+```
+
+Or from source (for development):
+
+```sh
 git clone https://github.com/dhaalves/oswap.git
 cd oswap
-npm link        # puts the `oswap` command on your PATH
+npm link
 ```
 
 ## Quick start
