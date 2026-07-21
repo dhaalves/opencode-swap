@@ -1,7 +1,29 @@
 {
   "name": "oswap",
   "version": "0.1.0",
-  "description": "opencode-go account/key rotator: local proxy with automatic rate-limit rotation",
+  "description": "Automatic API key rotation for opencode-go — local proxy that round-robins multiple accounts and fails over on rate limits (HTTP 429)",
+  "keywords": [
+    "opencode",
+    "opencode-go",
+    "api-key-rotation",
+    "rate-limit",
+    "429",
+    "key-rotation",
+    "proxy",
+    "load-balancer",
+    "failover",
+    "multiple-accounts",
+    "llm",
+    "ai-agents",
+    "cli"
+  ],
+  "author": "dhaalves",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhaalves/oswap.git"
+  },
+  "bugs": "https://github.com/dhaalves/oswap/issues",
+  "homepage": "https://github.com/dhaalves/oswap#readme",
   "type": "module",
   "bin": {
     "oswap": "./src/cli.js"

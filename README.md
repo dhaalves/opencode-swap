@@ -1,14 +1,21 @@
-# oswap
+# oswap — automatic API key rotation for opencode-go
 
-**opencode-go account/key rotator** — a tiny local proxy that automatically rotates between multiple `opencode-go` API keys when you hit rate limits. Zero dependencies, one Node runtime, works on Windows/macOS/Linux.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js ≥ 20](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](https://nodejs.org)
+[![Tests: 17 passing](https://img.shields.io/badge/tests-17%20passing-brightgreen)](#development)
+[![Platform: Windows | macOS | Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#requirements)
+
+**oswap** is a lightweight local proxy that rotates between multiple **opencode-go** API keys automatically when you hit **rate limits (HTTP 429)**. If you use [opencode](https://opencode.ai) with more than one account, oswap turns "rate limit reached, stop working" into a transparent, instant failover to the next key — no restarts, no manual account switching.
+
+Zero dependencies, one Node.js runtime, works on Windows, macOS, and Linux.
 
 ## The problem
 
-opencode retries rate-limited (HTTP 429) requests with the **same API key** — there is no built-in mechanism to fail over to another account. If you have multiple opencode-go accounts/keys, hitting the per-key usage limit means stopping work (or waiting) even though another key has quota left.
+opencode retries rate-limited (HTTP 429) requests with the **same API key** — there is no built-in multi-account support or key failover. If you have multiple opencode-go accounts, hitting the per-key usage limit means stopping work (or waiting for the cooldown) even though another key has quota left. Common searches that land here: *opencode rate limit error, opencode multiple accounts, opencode-go switch account, opencode 429 too many requests.*
 
 ## The fix
 
-oswap sits between opencode and the upstream API (`https://opencode.ai/zen/go`) as a local HTTP proxy. It holds a pool of your keys and:
+oswap sits between opencode and the upstream API (`https://opencode.ai/zen/go`) as a local HTTP proxy and load balancer. It holds a pool of your keys and:
 
 - **Round-robins** requests across all ready keys
 - **Rotates instantly on 429** — the throttled key goes into cooldown (honoring `Retry-After` / `retry-after-ms`), and the request is retried with the next key *before your client ever sees an error*
@@ -40,7 +47,7 @@ The `baseURL` override is set on the **provider**, so every `opencode-go/*` mode
 ## Install
 
 ```sh
-git clone https://github.com/<you>/oswap.git
+git clone https://github.com/dhaalves/oswap.git
 cd oswap
 npm link        # puts the `oswap` command on your PATH
 ```
@@ -176,6 +183,32 @@ src/cli.js    — command line: serve/status/add/remove/import/install/test/...
 test/         — node:test suites, zero network (fake in-process upstream)
 ```
 
+## FAQ
+
+### Does opencode support multiple accounts natively?
+
+No. opencode stores one credential per provider in `auth.json` and retries rate-limited requests with the same key. Multi-account rotation is exactly what oswap adds, without modifying opencode itself.
+
+### How do I fix "rate limit reached" / HTTP 429 errors in opencode?
+
+Run oswap with two or more keys. When the active key returns 429, oswap puts it in cooldown (honoring the server's `Retry-After`) and retries the same request with the next key — opencode never sees the error.
+
+### Will this break model switching or streaming?
+
+No. oswap is transport-layer only: model names, request bodies, and SSE streams pass through byte-identical. Retries only happen before the first response byte, so a stream is never duplicated mid-flight.
+
+### Can I use it with other OpenAI-compatible providers?
+
+The rotation logic is provider-agnostic — only the `import` command is opencode-go-specific. Point `--upstream` at any OpenAI-compatible base URL and add keys with `oswap add`.
+
+### Is oswap a VPN or does it send my keys anywhere?
+
+No. It binds to `127.0.0.1`, stores keys in a local `keys.json`, and only ever talks to the configured upstream. Keys are masked in all output.
+
+### How is this different from other opencode multi-account tools?
+
+oswap is a standalone proxy, not an opencode plugin — plugin APIs can't intercept 429 responses, so plugin-based rotators rely on monkey-patching `fetch`. The proxy approach is stable across opencode updates and gives you persistent per-key stats and cooldowns across restarts.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
