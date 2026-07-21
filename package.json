@@ -1,0 +1,17 @@
+{
+  "name": "oswap",
+  "version": "0.1.0",
+  "description": "opencode-go account/key rotator: local proxy with automatic rate-limit rotation",
+  "type": "module",
+  "bin": {
+    "oswap": "./src/cli.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "serve": "node src/cli.js serve",
+    "test": "node --test test/"
+  },
+  "license": "MIT"
+}
