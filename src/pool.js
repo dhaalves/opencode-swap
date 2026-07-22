@@ -1,10 +1,14 @@
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
 import { randomBytes } from "node:crypto";
-import { fileURLToPath } from "node:url";
 
-const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-export const DEFAULT_KEYS_PATH = resolve(PROJECT_ROOT, "keys.json");
+// User-level pool location: the npm package dir is wiped on every upgrade,
+// so keys.json must live outside it.
+const CONFIG_DIR = process.env.XDG_CONFIG_HOME
+  ? join(process.env.XDG_CONFIG_HOME, "oswap")
+  : join(homedir(), ".config", "oswap");
+export const DEFAULT_KEYS_PATH = join(CONFIG_DIR, "keys.json");
 export const DEFAULT_UPSTREAM = "https://opencode.ai/zen/go";
 
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 60_000;

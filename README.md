@@ -104,7 +104,7 @@ dab9c869  home   sk-PR...NWp6  ready          85        0           0
 | `--host <h>` | `127.0.0.1` | Bind host |
 | `--upstream <url>` | `https://opencode.ai/zen/go` | Upstream base URL |
 | `--max-wait-ms <n>` | `30000` | Max wait for a cooling key before returning 429 |
-| `--keys <path>` | `./keys.json` | Pool file location |
+| `--keys <path>` | `~/.config/oswap/keys.json` | Pool file location |
 | `--provider <id>` | `opencode-go` | Provider id for `import` |
 
 ## Rotation semantics
@@ -127,7 +127,7 @@ On the proxy port:
 
 ## Configuration file
 
-`keys.json` (created by `oswap import` / `oswap add`) — **contains secrets, keep it out of git** (it's in `.gitignore`):
+`~/.config/oswap/keys.json` (created by `oswap import` / `oswap add`) — **contains secrets, keep it out of git**. It lives in your user config dir, not the package dir, so `npm update` never wipes your pool:
 
 ```json
 {
