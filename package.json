@@ -29,7 +29,7 @@
     "src"
   ],
   "bin": {
-    "oswap": "./src/cli.js"
+    "oswap": "src/cli.js"
   },
   "engines": {
     "node": ">=20"
