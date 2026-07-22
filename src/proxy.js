@@ -1,7 +1,22 @@
 import http from "node:http";
+import { readFileSync } from "node:fs";
 import { Readable } from "node:stream";
 import { once } from "node:events";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { DEFAULT_UPSTREAM } from "./pool.js";
+
+/** Where the code in this process was loaded from — a global install or a repo checkout. */
+export const SOURCE_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
+
+/** Version of the code actually loaded into this process, not whatever is installed elsewhere. */
+export const VERSION = (() => {
+  try {
+    return JSON.parse(readFileSync(join(SOURCE_DIR, "package.json"), "utf8")).version ?? "unknown";
+  } catch {
+    return "unknown";
+  }
+})();
 
 const HOP_BY_HOP = new Set([
   "connection",
@@ -182,10 +197,10 @@ export function createOswapServer({
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === "GET" && req.url === "/oswap/health") {
-        return sendJson(res, 200, { ok: true, upstream });
+        return sendJson(res, 200, { ok: true, upstream, version: VERSION, pid: process.pid, source: SOURCE_DIR });
       }
       if (req.method === "GET" && req.url === "/oswap/status") {
-        return sendJson(res, 200, { upstream, keys: pool.status() });
+        return sendJson(res, 200, { upstream, version: VERSION, keys: pool.status() });
       }
       const body = ["GET", "HEAD"].includes(req.method) ? Buffer.alloc(0) : await readBody(req);
       await proxyOnce(pool, upstream, req, res, body, { maxWaitMs, log });

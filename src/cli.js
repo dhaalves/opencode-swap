@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync, writeFileSync, copyFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { join, resolve, dirname } from "node:path";
+import { pathToFileURL, fileURLToPath } from "node:url";
 import { KeyPool, DEFAULT_KEYS_PATH, DEFAULT_UPSTREAM, maskKey } from "./pool.js";
-import { startServer } from "./proxy.js";
+import { startServer, VERSION } from "./proxy.js";
 
 const DEFAULT_PORT = 8788;
+/** Directory the running code was loaded from — tells apart a global install from a repo checkout. */
+const INSTALL_DIR = dirname(dirname(fileURLToPath(import.meta.url)));
 
 // ---------- arg parsing ----------
 
@@ -16,7 +18,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a.startsWith("--")) {
       const name = a.slice(2);
-      if (name === "dry-run" || name === "force" || name === "quiet") {
+      if (name === "dry-run" || name === "force" || name === "quiet" || name === "version") {
         args[name] = true;
       } else {
         args[name] = argv[++i];
@@ -93,7 +95,7 @@ async function cmdServe(args) {
   const maxWaitMs = num(args["max-wait-ms"], 30_000);
   const server = await startServer({ pool, upstream, port, host, maxWaitMs });
   const addr = server.address();
-  console.log(`oswap proxy listening on http://${addr.address}:${addr.port}`);
+  console.log(`oswap ${VERSION} listening on http://${addr.address}:${addr.port} (from ${INSTALL_DIR})`);
   console.log(`upstream: ${upstream} | keys: ${pool.keys.length} | max-wait: ${maxWaitMs}ms`);
   console.log(`point opencode at it: provider.opencode-go.options.baseURL = "http://${addr.address}:${addr.port}/v1"`);
   console.log(`status: http://${addr.address}:${addr.port}/oswap/status`);
@@ -231,6 +233,29 @@ function cmdUninstall(args) {
   }
 }
 
+/**
+ * The question this answers: "is the proxy I am talking to running the code I
+ * just installed?" A stale long-running `oswap serve` is invisible otherwise —
+ * it keeps serving the code it loaded at boot, whatever is on disk now.
+ */
+async function cmdVersion(args) {
+  console.log(`cli     ${VERSION}  (${INSTALL_DIR})`);
+  const port = num(args.port, DEFAULT_PORT);
+  const host = args.host ?? "127.0.0.1";
+  try {
+    const res = await fetch(`http://${host}:${port}/oswap/health`, { signal: AbortSignal.timeout(3000) });
+    const data = await res.json();
+    console.log(`serve   ${data.version}  (${data.source}) pid ${data.pid}`);
+    if (data.version !== VERSION || data.source !== INSTALL_DIR) {
+      console.log(`\nMISMATCH: the running proxy is not this code. Restart it to pick up the update.`);
+    } else {
+      console.log(`\nin sync`);
+    }
+  } catch {
+    console.log(`serve   not running on ${host}:${port}`);
+  }
+}
+
 function die(msg) {
   console.error(`oswap: ${msg}`);
   process.exit(1);
@@ -252,6 +277,7 @@ commands:
   test                  check every key against the upstream /v1/models endpoint
   install               point opencode.json provider.opencode-go at the proxy (backs up first)
   uninstall             remove the baseURL override from opencode.json
+  version               version of this CLI vs the running proxy (catches a stale serve)
 
 options:
   --port <n>            proxy port (default ${DEFAULT_PORT})
@@ -277,7 +303,7 @@ const isMain =
 
 if (isMain) {
   const args = parseArgs(process.argv.slice(2));
-  const cmd = args._[0] ?? "help";
+  const cmd = args.version ? "version" : (args._[0] ?? "help");
 
   const commands = {
     serve: cmdServe,
@@ -292,6 +318,7 @@ if (isMain) {
     test: cmdTest,
     install: cmdInstall,
     uninstall: cmdUninstall,
+    version: cmdVersion,
     help: cmdHelp,
   };
 

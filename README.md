@@ -97,6 +97,7 @@ dab9c869  home   sk-PR...NWp6  ready          85        0           0
 | `oswap test` | Check every key against the upstream `/v1/models` |
 | `oswap install` | Set `provider.opencode-go.options.baseURL` in `opencode.json` (makes `.oswap-bak` backup) |
 | `oswap uninstall` | Remove the baseURL override |
+| `oswap version` | Version of this CLI vs the running proxy — catches a `serve` still running older code |
 
 | Option | Default | Description |
 |---|---|---|
@@ -122,8 +123,10 @@ dab9c869  home   sk-PR...NWp6  ready          85        0           0
 
 On the proxy port:
 
-- `GET /oswap/health` → `{ ok, upstream }`
-- `GET /oswap/status` → per-key state, cooldowns, and counters (keys always masked)
+- `GET /oswap/health` → `{ ok, upstream, version, pid, source }`
+- `GET /oswap/status` → `{ upstream, version, keys }` — per-key state, cooldowns, and counters (keys always masked)
+
+`version` and `source` report the code the proxy actually loaded at boot, which is not necessarily what is on disk now. After upgrading, restart `oswap serve` and confirm with `oswap version`.
 
 ## Configuration file
 
