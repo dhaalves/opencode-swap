@@ -14,6 +14,10 @@ export const DEFAULT_UPSTREAM = "https://opencode.ai/zen/go";
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 60_000;
 const DEFAULT_ERROR_COOLDOWN_MS = 30_000;
 const DEFAULT_AUTH_FAIL_COOLDOWN_MS = 3_600_000; // 1h: key is probably dead, not throttled
+// Upstream sends the *weekly-reset date* as Retry-After even when only the short
+// (rolling) window tripped, which would bench a key for days. Cap what we honor so
+// we re-probe within the hour and recover as soon as the real limit clears.
+const DEFAULT_MAX_RATE_LIMIT_COOLDOWN_MS = 3_600_000; // 1h
 
 const now = () => Date.now();
 
@@ -78,12 +82,14 @@ export class KeyPool {
     rateLimitCooldownMs = DEFAULT_RATE_LIMIT_COOLDOWN_MS,
     errorCooldownMs = DEFAULT_ERROR_COOLDOWN_MS,
     authFailCooldownMs = DEFAULT_AUTH_FAIL_COOLDOWN_MS,
+    maxRateLimitCooldownMs = DEFAULT_MAX_RATE_LIMIT_COOLDOWN_MS,
     persist = true,
   } = {}) {
     this.path = path;
     this.rateLimitCooldownMs = rateLimitCooldownMs;
     this.errorCooldownMs = errorCooldownMs;
     this.authFailCooldownMs = authFailCooldownMs;
+    this.maxRateLimitCooldownMs = maxRateLimitCooldownMs;
     this.persist = persist;
     this.keys = [];
     this.rr = 0; // round-robin cursor
@@ -243,7 +249,8 @@ export class KeyPool {
   reportRateLimit(id, retryAfterMs) {
     const k = this.keys.find((x) => x.id === id);
     if (!k) return;
-    const wait = retryAfterMs != null && retryAfterMs > 0 ? retryAfterMs : this.rateLimitCooldownMs;
+    const requested = retryAfterMs != null && retryAfterMs > 0 ? retryAfterMs : this.rateLimitCooldownMs;
+    const wait = Math.min(requested, this.maxRateLimitCooldownMs);
     k.cooldownUntil = now() + wait;
     k.stats.rateLimits += 1;
     k.stats.lastError = "429 rate limit";

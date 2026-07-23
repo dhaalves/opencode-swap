@@ -93,10 +93,12 @@ async function cmdServe(args) {
   const host = args.host ?? "127.0.0.1";
   const upstream = args.upstream ?? DEFAULT_UPSTREAM;
   const maxWaitMs = num(args["max-wait-ms"], 30_000);
+  const maxCooldownMs = num(args["max-cooldown-ms"], 3_600_000);
+  pool.maxRateLimitCooldownMs = maxCooldownMs;
   const server = await startServer({ pool, upstream, port, host, maxWaitMs });
   const addr = server.address();
   console.log(`oswap ${VERSION} listening on http://${addr.address}:${addr.port} (from ${INSTALL_DIR})`);
-  console.log(`upstream: ${upstream} | keys: ${pool.keys.length} | max-wait: ${maxWaitMs}ms`);
+  console.log(`upstream: ${upstream} | keys: ${pool.keys.length} | max-wait: ${maxWaitMs}ms | max-cooldown: ${maxCooldownMs}ms`);
   console.log(`point opencode at it: provider.opencode-go.options.baseURL = "http://${addr.address}:${addr.port}/v1"`);
   console.log(`status: http://${addr.address}:${addr.port}/oswap/status`);
 }
@@ -284,6 +286,7 @@ options:
   --host <h>            bind host (default 127.0.0.1)
   --upstream <url>      upstream base (default ${DEFAULT_UPSTREAM})
   --max-wait-ms <n>     max time to wait for a cooling key before 429 (default 30000)
+  --max-cooldown-ms <n> cap on a key's cooldown, ignoring longer upstream Retry-After (default 3600000)
   --keys <path>         pool file (default ${DEFAULT_KEYS_PATH})
   --provider <id>       provider for import (default opencode-go)
 

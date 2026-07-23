@@ -1,6 +1,6 @@
 {
   "name": "opencode-swap",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Automatic API key rotation for opencode-go — local proxy that round-robins multiple accounts and fails over on rate limits (HTTP 429)",
   "keywords": [
     "opencode",

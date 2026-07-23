@@ -35,6 +35,14 @@ test("rate-limited key is skipped and cooldown honors retryAfterMs", () => {
   assert.equal(pool.acquire().key, "b");
 });
 
+test("cooldown is capped so a multi-day Retry-After can't bench a key for days", () => {
+  const pool = makePool(["a"], { maxRateLimitCooldownMs: 3_600_000 });
+  const threeDaysMs = 3 * 24 * 3_600_000;
+  pool.reportRateLimit(pool.keys[0].id, threeDaysMs);
+  assert.ok(pool.keys[0].cooldownUntil <= Date.now() + 3_600_000);
+  assert.ok(pool.keys[0].cooldownUntil > Date.now() + 3_500_000);
+});
+
 test("default cooldown applies when no retry-after given", () => {
   const pool = makePool(["a"], { rateLimitCooldownMs: 60_000 });
   pool.reportRateLimit(pool.keys[0].id, null);
